@@ -1,10 +1,4 @@
 #include <iostream>
-
-using namespace std;
-
-int main()
-{
-#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
@@ -15,6 +9,7 @@ int main()
 
 using namespace std;
 using namespace cv;
+
 
 
 
@@ -31,7 +26,7 @@ int main(int argc, char** argv)
      adaptiveThreshold(src, src, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, 11, 17);
     //Canny(src, src, 255, 200, 3);
 
-     Mat kernel = getStructuringElement(CV_SHAPE_RECT, Size(5,5));
+     Mat kernel = getStructuringElement(CV_SHAPE_RECT, Size(6,6));
 
      morphologyEx(src, src, MORPH_CLOSE, kernel);
     // morphologyEx(src, src, MORPH_OPEN, Mat());
@@ -64,6 +59,8 @@ int main(int argc, char** argv)
              }
          }
     float match;
+    vector<Moments> mu(16);
+    int v = 0;
     drawContours(src, contours, second, Scalar(255,0,0), 2, 8);
     int xmin, xmax, ymin, ymax, square_area;
     for(int i = 0; i<contours[second].size(); i++)
@@ -98,15 +95,242 @@ int main(int argc, char** argv)
             if(contours[i][j].y<ymin) ymin =  contours[i][j].y;
         }
     int square_area2 = (xmax-xmin)*(ymax-ymin);
-    if(xmax- xmin >x*0.9 && xmax - xmin < x*1.1 &&  ymax- ymin >y*0.9 && ymax - ymin < y*1.1 && (square_area2>square_area*0.9) && (square_area2<square_area*1.2)) drawContours(src, contours, i, Scalar(255,0,0), 2, 8);
+    if(xmax- xmin >x*0.9 && xmax - xmin < x*1.1 &&  ymax- ymin >y*0.9 && ymax - ymin < y*1.1 && (square_area2>square_area*0.9) && (square_area2<square_area*1.2) && (ymax>400)&&(ymax<850))
+        {
+            drawContours(src, contours, i, Scalar(255,0,0), 2, 8);
+            mu[v] = moments(contours[i],false);
+            v++;
+        }
+    }
+
+    vector<Point2f> mc(64);
+    for (int i = 0; i<mu.size();i++)
+    {
+        mc[i] = Point( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
+
+    }
+
+int j = 16;
+int jj = 63;
+    for(int i = 16; i>0;i--)
+    {
+        x = (mc[i-1].x-mc[i-2].x)/2;
+        if(i-1>11)
+        {
+            y = (mc[i-1].y-mc[i-9].y)/2;
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+y );
+
+            j++;
+
+
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+2*y );
+
+            j++;
+
+
+            if(i-1 != 15)
+            {
+                int xx = (mc[j-5].x-mc[j-2].x)/2;
+                mc[jj] = Point(mc[j-5].x - xx, mc[j-5].y);
+
+                jj--;
+                if(i-1==14)
+                {
+                    mc[jj] = Point(mc[j-5].x + xx, mc[j-5].y);
+
+                    jj--;
+                }
+
+                xx = (mc[j-4].x-mc[j-1].x)/2;
+                mc[jj] = Point(mc[j-4].x - xx , mc[j-4].y);
+
+                jj--;
+
+                if(i-1==14)
+                {
+                    mc[jj] = Point(mc[j-4].x + xx, mc[j-4].y);
+
+                    jj--;
+                }
+            }
+
+
+        }
+        if((i)>0&&(i)<4)
+        {
+            y = (mc[i-1].y-mc[i+7].y)/2;
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+y );
+
+            j++;
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+2*y );
+
+            j++;
+
+
+                int xx = (mc[j-5].x-mc[j-2].x)/2;
+                mc[jj] = Point(mc[j-5].x - xx, mc[j-5].y); //legit
+
+                jj--;
+
+                if(i-1==0)
+                {
+                    mc[jj] = Point(mc[j-5].x - 3*xx, mc[j-5].y);
+
+                    jj--;
+                }
+                xx = (mc[j-4].x-mc[j-1].x)/2;
+                mc[jj] = Point(mc[j-4].x - xx , mc[j-4].y);
+
+                jj--;
+                if(i-1==0)
+                {
+                    mc[jj] = Point(mc[j-5].x - 3*xx, mc[j-4].y);
+
+                    jj--;
+                }
+
+
+
+
+        }
+        if(i-1==12)
+        {
+            y = (mc[i-1].y-mc[i-9].y)/2;
+            mc[j] = Point( mc[i-9].x, mc[i-9].y+y);
+
+            j++;
+            mc[j] = Point( mc[i-9].x, mc[i-9].y-y);
+
+            j++;
+
+
+        }
+
+        if(i-1==3)
+        {
+            y = (mc[i-1].y-mc[i+7].y)/2;
+            mc[j] = Point( mc[i+7].x, mc[i+7].y-y);
+
+            j++;
+            mc[j] = Point( mc[i+7].x, mc[i+7].y+y);
+
+            j++;
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+y);
+
+            j++;
+            mc[j] = Point( mc[i-1].x, mc[i-1].y+2*y );
+
+            j++;
+
+        }
+        if(i-1 == 12 || i-1 == 8 || i-1 == 4)
+        {
+
+        }
+        else
+        {
+            if(i != 1)
+            {
+            mc[j] = Point( mc[i-1].x-x, mc[i-1].y );
+
+            j++;
+            }
+        }
     }
 
 
+vector<Point2f> up(64);
+int pom =0;
+Point2f luc=mc[0];
+for( int i=0; i<mc.size(); i++)
+{
+
+    if(luc.x>mc[i].x&&luc.y>mc[i].y)
+    {
+        luc = mc[i];
+        pom = i;
+    }
+
+}
+
+x=0;
+
+for(int j = 0; j<4; j++)
+{
+    for(int i =0; i<mc.size(); i++)
+    {
+
+        if((mc[i].x<=mc[pom+j].x+50)&&(mc[i].x>=mc[pom+j].x-50))
+        {
+            up[x] = mc[i];
+            x++;
+        }
+
+    }
+    for(int i =0; i<mc.size(); i++)
+    {
+
+        if((mc[i].x<=mc[pom+12-3*j].x+50)&&(mc[i].x>=mc[pom+12-3*j].x-50)&&j!=3)
+        {
+            up[x] = mc[i];
+            x++;
+        }
+        if((mc[i].x<=mc[pom-1].x+50)&&(mc[i].x>=mc[pom-1].x-50)&&j==3)
+        {
+            up[x] = mc[i];
+            x++;
+        }
+    }
+}
+int  zamiana;
+Point2f schowek;
+for (int j =0; j<8;j++)
+{
+    do
+    {
+        zamiana=0;//przed każdym "przejazdem" pętli for zmienna zamiana jest zerowana
+        for (int i=0+j*8; i<8+8*j-1; i++)
+        {
+            if (up[i].y>up[i+1].y)// jeśli element tablicy jest większy od następnego elementu
+            {
+                zamiana=zamiana+1; //jeśli jest jakaś zmiana, to zmienne zamiana powiększa swoją wartość
+                schowek=up[i];//wartość t[i] jest kopiowana do schowka
+                up[i]=up[i+1];//t[i] przyjmuje wartość następnego elementu, gdyż jest on mniejszy
+                up[i+1]=schowek;//kolejny element tablicy przejmuje wcześniejszą wartość poprzedniego elementu, gdyż jest on większy
+            }
+        }
+    }
+    while(zamiana!=0);
+}
+
+x=0;
+y=0;
+vector <string> plansza (64);
+for(int i = 0; i <plansza.size(); i++)
+{
+    if(i==0||i==7||i==56||i==63) plansza[i] = "R";
+    if(i==8||i==15||i==48||i==55) plansza[i] = "N";
+    if(i==16||i==23||i==40||i==47) plansza[i] = "B";
+    if(i==24||i==31) plansza[i] = "K";
+    if(i==32||i==39) plansza[i] = "Q";
+    if(i==1+8*x)
+    {
+        plansza[i] = "P";
+        x++;
+    }
+    if(i==6+8*y)
+    {
+        plansza[i] = "P";
+        y++;
+    }
+}
+for(int i =0; i<plansza.size();i++)
+{
+    putText(src,plansza[i],up[i], FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+}
 
      imshow("source", src);
 
 
      waitKey();
-}
-
 }
