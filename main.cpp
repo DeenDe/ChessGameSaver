@@ -19,18 +19,18 @@ int main(int argc, char** argv)
     // Wczytywanie obrazu
     string path = string(PROJECT_SOURCE_DIR) + "/data/wm_lab_3/szachy_3.mp4";
     VideoCapture capture(path);
-    cv::Mat src;
-    capture>>src;
+    cv::Mat src, frame, prev, img, img2, img3;
+    capture>>frame;
+    src = frame.clone();
     if (src.empty()) return -1;
      cvtColor(src, src, CV_RGB2GRAY);
+
      adaptiveThreshold(src, src, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, 11, 17);
-    //Canny(src, src, 255, 200, 3);
+     Mat dst = src.clone();
 
      Mat kernel = getStructuringElement(CV_SHAPE_RECT, Size(6,6));
 
      morphologyEx(src, src, MORPH_CLOSE, kernel);
-    // morphologyEx(src, src, MORPH_OPEN, Mat());
-
 
      vector<vector<Point> > contours;
      findContours(src, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
@@ -107,7 +107,6 @@ int main(int argc, char** argv)
     for (int i = 0; i<mu.size();i++)
     {
         mc[i] = Point( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
-
     }
 
 int j = 16;
@@ -326,10 +325,159 @@ for(int i = 0; i <plansza.size(); i++)
 }
 for(int i =0; i<plansza.size();i++)
 {
-    putText(src,plansza[i],up[i], FONT_HERSHEY_PLAIN, 2,  Scalar(0,0,255,255));
+    putText(src,plansza[i],up[i], FONT_HERSHEY_PLAIN, 6,  Scalar(0,0,255,255));
 }
 
-     imshow("source", src);
+
+Mat kernel2 = getStructuringElement(CV_SHAPE_ELLIPSE, Size(6,6));
+
+morphologyEx(dst, dst, MORPH_CLOSE, kernel2);
+//morphologyEx(dst, dst, MORPH_OPEN, Mat());
+//GaussianBlur( dst, dst, Size(9, 9), 2, 2 );
+
+
+
+
+
+
+vector<vector<Point> > contours2;
+findContours(dst, contours2, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+cvtColor(dst, dst, CV_GRAY2RGB);
+vector<Moments> mu2;
+
+for(int i =0; i<contours2.size();i++)
+{
+    if(contourArea(contours2[i])>1000)
+    {
+        drawContours(dst, contours2, i, Scalar(255,0,0), 2, 8);
+        mu2.push_back(moments(contours[i],false));
+    }
+}
+vector<Point2f> mc2;
+for (int i = 0; i<mu2.size();i++)
+{
+
+    mc2.push_back(Point( mu2[i].m10/mu2[i].m00 , mu2[i].m01/mu2[i].m00 ));
+
+}
+
+for (int i = 0; i<mc2.size();i++)
+{
+
+        circle(dst, mc2[i],6,Scalar(0,255,0));
+}
+Mat Template = frame.clone();
+Mat video;
+cvtColor(Template, Template, CV_BGR2GRAY);
+int movement = 10000000;
+int first = 0;
+cvtColor(frame, prev, CV_BGR2GRAY);
+int licznik = 0;
+while(true)
+{
+    // Sprawdzenie czy jest koniec filmu
+    if(!capture.read(frame)) break;
+    video = frame.clone();
+
+    // Skala szarosci
+    cvtColor(frame, frame, CV_BGR2GRAY);
+
+    // Roznicowanie klatek
+   absdiff(frame, prev, img);
+    // Binaryzacja
+    threshold(img, img, 20, 255, THRESH_BINARY);
+    // Morfologiczne otwarcie
+   morphologyEx(img, img, MORPH_OPEN, Mat());
+   morphologyEx(img,img, MORPH_CLOSE, Mat());
+    // Wyznaczenie konturow
+
+    vector<vector<Point> > contours3;
+    findContours(img, contours3, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+    if(movement == 0 )
+    {
+        absdiff(Template, frame, img3);
+        threshold(img3, img3, 40, 255, THRESH_BINARY);
+        // Morfologiczne otwarcie
+       Mat kernel2 = getStructuringElement(CV_SHAPE_ELLIPSE, Size(6,6));
+       morphologyEx(img3, img3, MORPH_OPEN, kernel2);
+       morphologyEx(img3,img3, MORPH_CLOSE, Mat());
+       vector<vector<Point> > contours4;
+       findContours(img3, contours4, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+       cvtColor(img3, img3, CV_GRAY2RGB);
+       vector<Point2f> mc3;
+       int z =0;
+       for(int i =0; i< contours4.size();i++)
+       {
+           if(contourArea(contours4[i])>300)
+           {
+               drawContours(img3, contours4, i, Scalar(255,0,0), 2, 8);
+               Moments mu3= moments(contours4[i],false);
+               mc3.push_back(Point( mu3.m10/mu3.m00 , mu3.m01/mu3.m00 ));
+           }
+       }
+       int checked = 0;
+       string pom;
+       int pom2 = 0;
+       for(int i =0; i<up.size();i++)
+       {
+           for(int j = 0; j<mc3.size(); j++)
+           {
+               if(mc3[j].x>(up[i].x - 25) && mc3[j].x<(up[i].x + 25) && mc3[j].y>(up[i].y - 25) && mc3[j].y<(up[i].y + 25))
+               {
+                   checked = 1;
+               }
+           }
+           if(checked == 1)
+           {
+               if(plansza[i] == "")
+               {
+                   pom2 = i;
+               }
+               if(plansza[i] != "")
+               {
+                   pom = plansza[i];
+                   plansza [i] = "";
+               }
+
+           }
+           checked = 0;
+       }
+       plansza [pom2] = pom;
+
+      // imshow("frame", img3);
+      // imshow("temp", Template);
+      // waitKey(0);
+       Template = frame;
+    }
+    cvtColor(img, img2, CV_GRAY2RGB);
+    for(int i =0; i<contours3.size();i++)
+    {
+        drawContours(img2, contours3, i, Scalar(255,0,0), 2, 8);
+
+    }
+
+    if(contours3.size()>100)
+    {
+        movement = 10;
+    }
+    if(contours3.size()<30 &&  licznik >5) movement = movement - 1;
+    string number = std::to_string(contours3.size());
+   // putText(img2,number,up[0], FONT_HERSHEY_PLAIN, 6,  Scalar(0,0,255,255));
+    //putText(img2,to_string(licznik),up[15], FONT_HERSHEY_PLAIN, 6,  Scalar(0,0,255,255));
+    for(int i =0; i<plansza.size();i++)
+    {
+        putText(video,plansza[i],up[i], FONT_HERSHEY_PLAIN, 6,  Scalar(0,0,255,255));
+    }
+    imshow("vid", video);
+    waitKey(30);
+
+    // Zapisanie ;poprzedniej klatki
+    prev = frame.clone();
+    licznik++;
+
+}
+
+//     imshow("source", dst);
 
 
      waitKey();
