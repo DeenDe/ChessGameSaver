@@ -508,10 +508,11 @@ while(true)
 
     for(int i =0; i<plansza.size();i++)
     {
-        putText(video, plansza[i], up[i], FONT_HERSHEY_PLAIN, 6, Scalar(0,0,255,255));
+        putText(video, plansza[i], Point(up[i].x-60, up[i].y+30), FONT_HERSHEY_PLAIN, 5, Scalar(0,0,255,255));
     }
     imshow("vid", video);
-    waitKey(30);
+    char key = (char) cv::waitKey(30);
+    if (key == 27) break;
 
     // Zapisanie poprzedniej klatki
     prev = frame.clone();
