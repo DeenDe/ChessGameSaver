@@ -355,10 +355,10 @@ while(true)
        vector<Point2f> mc3;
        for(int i =0; i< contours4.size();i++)
        {           
-           if(contourArea(contours4[i])>300)
+           if(contourArea(contours4[i])>700)
            {
                Moments mu3= moments(contours4[i],false);
-               mc3.push_back(Point( mu3.m10/mu3.m00 , mu3.m01/mu3.m00 ));
+               mc3.push_back(Point( mu3.m10/mu3.m00 , mu3.m01/mu3.m00 ));              
            }
        }
        int checked = 0;
@@ -511,7 +511,7 @@ while(true)
 
     }
     imshow("vid", video);
-    char key = (char) cv::waitKey(30);
+    char key = (char) cv::waitKey(5);
     if (key == 27) break;
 
     // Zapisanie poprzedniej klatki
