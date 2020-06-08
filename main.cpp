@@ -40,13 +40,12 @@ int main(int argc, char** argv)
      cvtColor(src, src, CV_RGB2GRAY);
      // Progowanie i operacje morfologiczne
      adaptiveThreshold(src, src, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, 11, 17);
-     Mat dst = src.clone();
      Mat kernel = getStructuringElement(CV_SHAPE_RECT, Size(6,6));
      morphologyEx(src, src, MORPH_CLOSE, kernel);
 
      // Analiza powierzchni konturow
      vector<vector<Point> > contours;
-     findContours(src, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+     findContours(src, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);     
 
      float maxpropotion;
      float propotion;
@@ -72,7 +71,7 @@ int main(int argc, char** argv)
          }
     // Znalezienie skrajnych punktow konturu pola
     vector<Moments> mu(16);
-    int v = 0;
+    int v = 0;    
     int xmin, xmax, ymin, ymax, square_area;
     for(int i = 0; i<contours[second].size(); i++)
     {
@@ -110,7 +109,7 @@ int main(int argc, char** argv)
         }
         int square_area2 = (xmax-xmin)*(ymax-ymin);
         if(xmax- xmin >x*0.9 && xmax - xmin < x*1.1 &&  ymax- ymin >y*0.9 && ymax - ymin < y*1.1 && (square_area2>square_area*0.9) && (square_area2<square_area*1.2) && (ymax>400)&&(ymax<850))
-        {
+        {            
             mu[v] = moments(contours[i],false);
             v++;
         }
@@ -176,7 +175,7 @@ int main(int argc, char** argv)
             mc[j] = Point( mc[i-1].x, mc[i-1].y+y );
             j++;
             mc[j] = Point( mc[i-1].x, mc[i-1].y+2*y );
-            j++;
+            j++;            
             int xx = (mc[j-5].x-mc[j-2].x)/2;
             mc[jj] = Point(mc[j-5].x - xx, mc[j-5].y); //legit
             jj--;
@@ -293,12 +292,12 @@ y=0;
 vector <string> plansza (64);
 for(int i = 0; i <plansza.size(); i++)
 {
-    if(i==0||i==7) plansza[i] = "WR";
-    if(i==56||i==63) plansza[i] = "BR";
-    if(i==8||i==15) plansza[i] = "WN";
-    if(i==48||i==55) plansza[i] = "BN";
-    if(i==16||i==23) plansza[i] = "WB";
-    if(i==40||i==47) plansza[i] = "BB";
+    if(i==0||i==56) plansza[i] = "WR";
+    if(i==7||i==63) plansza[i] = "BR";
+    if(i==8||i==48) plansza[i] = "WN";
+    if(i==15||i==55) plansza[i] = "BN";
+    if(i==16||i==40) plansza[i] = "WB";
+    if(i==23||i==47) plansza[i] = "BB";
     if(i==24) plansza[i] = "WK";
     if(i==31) plansza[i] = "BK";
     if(i==32) plansza[i] = "WQ";
@@ -355,7 +354,7 @@ while(true)
        cvtColor(img3, img3, CV_GRAY2RGB);
        vector<Point2f> mc3;
        for(int i =0; i< contours4.size();i++)
-       {
+       {           
            if(contourArea(contours4[i])>300)
            {
                Moments mu3= moments(contours4[i],false);
@@ -372,7 +371,7 @@ while(true)
        {
            for(int j = 0; j<mc3.size(); j++)
            {
-               if(mc3[j].x>(up[i].x - 25) && mc3[j].x<(up[i].x + 25) && mc3[j].y>(up[i].y - 25) && mc3[j].y<(up[i].y + 25))
+               if(mc3[j].x>(up[i].x - 30) && mc3[j].x<(up[i].x + 30) && mc3[j].y>(up[i].y - 30) && mc3[j].y<(up[i].y + 30))
                {
                    checked = 1;
                }
@@ -499,16 +498,17 @@ while(true)
 
     cvtColor(img, img2, CV_GRAY2RGB);
 
-    if(contours3.size()>100)
+    if(contours3.size()>30)
     {
-        movement = 10;
+        movement = 15;
     }
 
-    if(contours3.size()<30) movement = movement - 1;
+    if(contours3.size()<2) movement = movement - 1;
 
     for(int i =0; i<plansza.size();i++)
     {
         putText(video, plansza[i], Point(up[i].x-60, up[i].y+30), FONT_HERSHEY_PLAIN, 5, Scalar(0,0,255,255));
+
     }
     imshow("vid", video);
     char key = (char) cv::waitKey(30);
